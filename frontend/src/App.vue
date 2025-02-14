@@ -118,7 +118,7 @@ function search() {
             <img :src="item.Images.Primary.Medium.URL" class="item-image">
             <div class="item-details">
               <h3>{{ item.ItemInfo.Title.DisplayValue }}</h3>
-              <p>{{ item.Offers.Listings[0]?.Price.DisplayAmount }}</p>
+              <p>{{ item.Offers?.Listings[0]?.Price.DisplayAmount }}</p>
             </div>
           </a>
         </li>
