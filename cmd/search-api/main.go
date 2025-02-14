@@ -11,7 +11,6 @@ import (
 	"github.com/goark/pa-api/query"
 	"github.com/kohge4/go-rakutenapi/rakuten"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/masa23/search-api/cmd/search-api/config"
 )
 
@@ -31,14 +30,11 @@ func amazonItemSearch(keyword string) (interface{}, error) {
 		client.PartnerTag(),
 		client.PartnerType(),
 	).Search(query.Keywords, keyword).EnableImages().EnableItemInfo().EnableOffers()
-	//Request and response
 	body, err := client.RequestContext(context.Background(), q)
 	if err != nil {
 		return nil, err
 	}
-	//io.Copy(os.Stdout, bytes.NewReader(body))
 
-	//Decode JSON
 	res, err := entity.DecodeResponse(body)
 	if err != nil {
 		return nil, err
@@ -67,13 +63,11 @@ func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 
 	client := rakuten.NewClient(tp.Client(), conf.Rakuten.ApplicationID, conf.Rakuten.AffiliateID)
 
-	// QueryParameter for Search argument
 	sOptions := &rakuten.IchibaItemSearchParams{
 		Keyword: keyword,
 		Hits:    10,
 	}
 
-	// Search Items from Rakuten Ichiba API
 	ichiba, _, err := client.Ichiba.Search(ctx, sOptions)
 	if err != nil {
 		return nil, err
@@ -113,10 +107,10 @@ func main() {
 	e := echo.New()
 
 	// CORSの許可
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	/*e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
-	}))
+	}))*/
 
 	e.POST("/amazon/search", amazonSearch)
 	e.POST("/rakuten/search", rakutenSearch)

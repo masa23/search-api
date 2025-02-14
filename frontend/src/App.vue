@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+
+const keyword = ref<string>('')
+
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const initialKeyword = params.get('keywords')
+  if (initialKeyword) {
+    keyword.value = initialKeyword
+    search()
+  }
+})
 
 interface RakutenItemDetail {
   Item: {
@@ -47,7 +58,7 @@ interface AmazonItemDetail {
   };
 }
 
-const keyword = ref('')
+//const keyword = ref('')
 const rakutenSearchResults = ref<RakutenItemDetail[]>([])
 const amazonSearchResults = ref<AmazonItemDetail[]>([])
 
@@ -61,7 +72,6 @@ function amazonSearch() {
   })
     .then((resp) => resp.json())
     .then((data) => {
-      console.log(data.SearchResult.Items)
       amazonSearchResults.value = data.SearchResult.Items
     })
     .catch((error) => {
