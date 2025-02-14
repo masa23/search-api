@@ -103,7 +103,7 @@ function search() {
         <h2>楽天市場</h2>
         <li v-for="(item, index) in rakutenSearchResults" :key="index" class="item">
           <a :href="item.Item.itemUrl" class="item-link">
-            <img :src="item.Item.mediumImageUrls[0].imageUrl" class="item-image">
+            <img :src="item.Item.mediumImageUrls[0]?.imageUrl" class="item-image">
             <div class="item-details">
               <h3>{{ item.Item.itemName }}</h3>
               <p>{{ item.Item.itemPrice }}円</p>
@@ -118,7 +118,7 @@ function search() {
             <img :src="item.Images.Primary.Medium.URL" class="item-image">
             <div class="item-details">
               <h3>{{ item.ItemInfo.Title.DisplayValue }}</h3>
-              <p>{{ item.Offers.Listings[0].Price.DisplayAmount }}</p>
+              <p>{{ item.Offers.Listings[0]?.Price.DisplayAmount }}</p>
             </div>
           </a>
         </li>
