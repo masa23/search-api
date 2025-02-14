@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-interface ItemDetail {
+interface RakutenItemDetail {
   Item: {
     mediumImageUrls: { imageUrl: string }[];
     itemUrl: string;
@@ -11,10 +11,65 @@ interface ItemDetail {
   }
 }
 
-const keyword = ref('')
-const searchResults = ref<ItemDetail[]>([])
+interface AmazonItemDetail {
+  ASIN: string;
+  DetailPageURL: string;
+  Images: {
+    Primary: {
+      Medium: { URL: string };
+    };
+  };
+  ItemInfo: {
+    Title: {
+      DisplayValue: string;
+    };
+    ByLineInfo: {
+      Brand: {
+        DisplayValue: string;
+      };
+    };
+    Classifications: {
+      ProductGroup: {
+        DisplayValue: string;
+      };
+    };
+    Features: {
+      DisplayValues: string[];
+    };
+  };
+  Offers: {
+    Listings: {
+      Price: {
+        DisplayAmount: string;
+        Price: number;
+      };
+    }[];
+  };
+}
 
-function search() {
+const keyword = ref('')
+const rakutenSearchResults = ref<RakutenItemDetail[]>([])
+const amazonSearchResults = ref<AmazonItemDetail[]>([])
+
+function amazonSearch() {
+  const formData = new FormData()
+  formData.append('keyword', keyword.value)
+
+  fetch('/api/amazon/search', {
+    method: 'POST',
+    body: formData
+  })
+    .then((resp) => resp.json())
+    .then((data) => {
+      console.log(data.SearchResult.Items)
+      amazonSearchResults.value = data.SearchResult.Items
+    })
+    .catch((error) => {
+      console.error('Error:', error)
+    })
+}
+
+function rakutenSearch() {
   const formData = new FormData()
   formData.append('keyword', keyword.value)
 
@@ -24,36 +79,57 @@ function search() {
   })
     .then((resp) => resp.json())
     .then((data) => {
-      searchResults.value = [...data.Items]
+      rakutenSearchResults.value = [...data.Items]
     })
     .catch((error) => {
       console.error('Error:', error)
     })
 }
 
+function search() {
+  amazonSearch()
+  rakutenSearch()
+}
+
 </script>
 
 <template>
   <div>
-    <h1>楽天 商品検索</h1>
+    <h1>一括商品 商品検索</h1>
     <input v-model="keyword" placeholder="商品名を入力" class="search-input" />
     <button @click="search" class="search-button">検索</button>
-    <ul class="result-list">
-      <li v-for="(item, index) in searchResults" :key="index" class="item">
-        <a :href="item.Item.itemUrl" class="item-link">
-          <img :src="item.Item.mediumImageUrls[0].imageUrl" class="item-image">
-          <div class="item-details">
-            <h3>{{ item.Item.itemName }}</h3>
-            <p>{{ item.Item.itemPrice }}円</p>
-          </div>
-        </a>
-      </li>
-    </ul>
+    <div class="results-container">
+      <ul class="result-list rakuten-results">
+        <h2>楽天市場</h2>
+        <li v-for="(item, index) in rakutenSearchResults" :key="index" class="item">
+          <a :href="item.Item.itemUrl" class="item-link">
+            <img :src="item.Item.mediumImageUrls[0].imageUrl" class="item-image">
+            <div class="item-details">
+              <h3>{{ item.Item.itemName }}</h3>
+              <p>{{ item.Item.itemPrice }}円</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+      <ul class="result-list amazon-results">
+        <h2>Amazon</h2>
+        <li v-for="(item, index) in amazonSearchResults" :key="index" class="item">
+          <a :href="item.DetailPageURL" class="item-link">
+            <img :src="item.Images.Primary.Medium.URL" class="item-image">
+            <div class="item-details">
+              <h3>{{ item.ItemInfo.Title.DisplayValue }}</h3>
+              <p>{{ item.Offers.Listings[0].Price.DisplayAmount }}</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.search-input, .search-button {
+.search-input,
+.search-button {
   padding: 8px 10px;
   margin: 10px 5px;
   border: 2px solid #ccc;
@@ -65,9 +141,16 @@ function search() {
   background-color: #f0f0f0;
 }
 
+.results-container {
+  display: flex;
+  justify-content: space-between;
+}
+
 .result-list {
+  flex: 1;
   list-style: none;
   padding: 0;
+  margin: 0 10px;
 }
 
 .item {

@@ -2,3 +2,7 @@ Rakuten:
   ApplicationID: ""
   ApplicationSecret: ""
   AffiliateID: ""
+Amazon:
+  AssociateTag: ""
+  AccessKey: ""
+  SecretKey: ""

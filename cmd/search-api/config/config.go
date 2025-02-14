@@ -6,14 +6,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
-	Rakuten RakutenConfig `yaml:"Rakuten"`
+type AmazonConfig struct {
+	AssociateTag string `yaml:"AssociateTag"`
+	AccessKey    string `yaml:"AccessKey"`
+	SecretKey    string `yaml:"SecretKey"`
 }
 
 type RakutenConfig struct {
 	ApplicationID     string `yaml:"ApplicationID"`
 	ApplicationSecret string `yaml:"ApplicationSecret"`
 	AffiliateID       string `yaml:"AffiliateID"`
+}
+
+type Config struct {
+	Amazon  AmazonConfig  `yaml:"Amazon"`
+	Rakuten RakutenConfig `yaml:"Rakuten"`
 }
 
 func Load(path string) (*Config, error) {

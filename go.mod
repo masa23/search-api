@@ -1,6 +1,8 @@
 module github.com/masa23/search-api
 
-go 1.21.5
+go 1.23
+
+toolchain go1.23.6
 
 require (
 	github.com/kohge4/go-rakutenapi v0.0.0-20200218073939-65425bbb1789
@@ -9,6 +11,9 @@ require (
 )
 
 require (
+	github.com/goark/errs v1.3.2 // indirect
+	github.com/goark/fetch v0.4.1 // indirect
+	github.com/goark/pa-api v0.12.7 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect

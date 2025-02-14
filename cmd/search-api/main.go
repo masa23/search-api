@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 
+	paapi5 "github.com/goark/pa-api"
+	"github.com/goark/pa-api/entity"
+	"github.com/goark/pa-api/query"
 	"github.com/kohge4/go-rakutenapi/rakuten"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,6 +16,50 @@ import (
 )
 
 var conf *config.Config
+
+func amazonItemSearch(keyword string) (interface{}, error) {
+	client := paapi5.New(
+		paapi5.WithMarketplace(paapi5.LocaleJapan),
+	).CreateClient(
+		conf.Amazon.AssociateTag,
+		conf.Amazon.AccessKey,
+		conf.Amazon.SecretKey,
+	)
+
+	q := query.NewSearchItems(
+		client.Marketplace(),
+		client.PartnerTag(),
+		client.PartnerType(),
+	).Search(query.Keywords, keyword).EnableImages().EnableItemInfo().EnableOffers()
+	//Request and response
+	body, err := client.RequestContext(context.Background(), q)
+	if err != nil {
+		return nil, err
+	}
+	//io.Copy(os.Stdout, bytes.NewReader(body))
+
+	//Decode JSON
+	res, err := entity.DecodeResponse(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func amazonSearch(c echo.Context) error {
+	keyword := c.FormValue("keyword")
+	if keyword == "" {
+		return c.JSON(http.StatusBadRequest, "keyword is required")
+	}
+
+	result, err := amazonItemSearch(keyword)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
 
 func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 	ctx := context.Background()
@@ -23,7 +70,7 @@ func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 	// QueryParameter for Search argument
 	sOptions := &rakuten.IchibaItemSearchParams{
 		Keyword: keyword,
-		Hits:    20,
+		Hits:    10,
 	}
 
 	// Search Items from Rakuten Ichiba API
@@ -71,6 +118,7 @@ func main() {
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
+	e.POST("/amazon/search", amazonSearch)
 	e.POST("/rakuten/search", rakutenSearch)
 
 	e.Logger.Fatal(e.Start(listenPort))
