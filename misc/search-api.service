@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/rakuten-affi -conf /usr/local/etc/rakuten-affi.yaml
+ExecStart=/usr/local/bin/search-api -conf /usr/local/etc/search-api.yaml
 Restart=always
 User=nobody
 Group=ubuntu

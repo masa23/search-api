@@ -1,4 +1,4 @@
-cmd/rakuten-affi/config.yaml
-cmd/rakuten-affi/rakuten-affi
+cmd/search-api/config.yaml
+cmd/search-api/search-api
 Makefile
 dist/

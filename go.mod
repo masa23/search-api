@@ -1,4 +1,4 @@
-module github.com/masa23/rakuten-affi
+module github.com/masa23/search-api
 
 go 1.21.5
 

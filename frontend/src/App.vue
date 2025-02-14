@@ -18,7 +18,7 @@ function search() {
   const formData = new FormData()
   formData.append('keyword', keyword.value)
 
-  fetch('/api/search', {
+  fetch('/api/rakuten/search', {
     method: 'POST',
     body: formData
   })
@@ -35,6 +35,7 @@ function search() {
 
 <template>
   <div>
+    <h1>楽天 商品検索</h1>
     <input v-model="keyword" placeholder="商品名を入力" class="search-input" />
     <button @click="search" class="search-button">検索</button>
     <ul class="result-list">

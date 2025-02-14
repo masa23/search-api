@@ -9,16 +9,16 @@ import (
 	"github.com/kohge4/go-rakutenapi/rakuten"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/masa23/rakuten-affi/cmd/rakuten-affi/config"
+	"github.com/masa23/search-api/cmd/search-api/config"
 )
 
 var conf *config.Config
 
-func rakutenSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
+func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 	ctx := context.Background()
 	tp := rakuten.Transport{}
 
-	client := rakuten.NewClient(tp.Client(), conf.ApplicationID, conf.AffiliateID)
+	client := rakuten.NewClient(tp.Client(), conf.Rakuten.ApplicationID, conf.Rakuten.AffiliateID)
 
 	// QueryParameter for Search argument
 	sOptions := &rakuten.IchibaItemSearchParams{
@@ -35,13 +35,13 @@ func rakutenSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 	return ichiba, nil
 }
 
-func search(c echo.Context) error {
+func rakutenSearch(c echo.Context) error {
 	keyword := c.FormValue("keyword")
 	if keyword == "" {
 		return c.JSON(http.StatusBadRequest, "keyword is required")
 	}
 
-	result, err := rakutenSearch(keyword)
+	result, err := rakutenItemSearch(keyword)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -71,7 +71,7 @@ func main() {
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
-	e.POST("/search", search)
+	e.POST("/rakuten/search", rakutenSearch)
 
 	e.Logger.Fatal(e.Start(listenPort))
 }

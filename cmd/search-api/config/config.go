@@ -7,6 +7,10 @@ import (
 )
 
 type Config struct {
+	Rakuten RakutenConfig `yaml:"Rakuten"`
+}
+
+type RakutenConfig struct {
 	ApplicationID     string `yaml:"ApplicationID"`
 	ApplicationSecret string `yaml:"ApplicationSecret"`
 	AffiliateID       string `yaml:"AffiliateID"`
