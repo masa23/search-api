@@ -1,0 +1,4 @@
+cmd/rakuten-affi/config.yaml
+cmd/rakuten-affi/rakuten-affi
+Makefile
+dist/

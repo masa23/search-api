@@ -1,0 +1,13 @@
+[Unit]
+Description=Rakuten Affiliate Program Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rakuten-affi -conf /usr/local/etc/rakuten-affi.yaml
+Restart=always
+User=nobody
+Group=ubuntu
+
+[Install]
+WantedBy=multi-user.target
