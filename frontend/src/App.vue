@@ -15,10 +15,12 @@ onMounted(() => {
 interface RakutenItemDetail {
   Item: {
     mediumImageUrls: { imageUrl: string }[];
-    itemUrl: string;
+    affiliateUrl: string;
     itemName: string;
     itemPrice: number;
     itemCode: string;
+    shopName: string;
+    shopAffiliateUrl: string;
   }
 }
 
@@ -112,11 +114,12 @@ function search() {
       <ul class="result-list rakuten-results">
         <h2>楽天市場</h2>
         <li v-for="(item, index) in rakutenSearchResults" :key="index" class="item">
-          <a :href="item.Item.itemUrl" class="item-link">
+          <a :href="item.Item.affiliateUrl" class="item-link">
             <img :src="item.Item.mediumImageUrls[0]?.imageUrl" class="item-image">
             <div class="item-details">
               <h3>{{ item.Item.itemName }}</h3>
               <p>{{ item.Item.itemPrice }}円</p>
+              <p>ショップ: <a :href="item.Item.shopAffiliateUrl" class="shop-link">{{ item.Item.shopName }}</a></p>
             </div>
           </a>
         </li>
@@ -190,5 +193,10 @@ function search() {
 .item-details p {
   margin: 0;
   font-size: 14px;
+}
+
+.shop-link {
+  color: #0073e6;
+  text-decoration: underline;
 }
 </style>
