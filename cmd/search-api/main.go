@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -16,7 +17,44 @@ import (
 
 var conf *config.Config
 
-func amazonItemSearch(keyword string) (interface{}, error) {
+type SortType string
+
+const (
+	SortTypeDefault   SortType = "default"
+	SortTypePriceAsc  SortType = "price_asc"
+	SortTypePriceDesc SortType = "price_desc"
+)
+
+type SearchRequest struct {
+	Keyword  string   `json:"keyword"`
+	MinPrice int      `json:"minPrice"`
+	MaxPrice int      `json:"maxPrice"`
+	Sort     SortType `json:"sort"`
+}
+
+func (s *SearchRequest) validate() error {
+	if s.Keyword == "" {
+		return errors.New("keyword is required")
+	}
+	if s.MinPrice < 0 {
+		return errors.New("minPrice must be greater than or equal to 0")
+	}
+	if s.MaxPrice < 0 {
+		return errors.New("maxPrice must be greater than or equal to 0")
+	}
+	if s.MinPrice > s.MaxPrice {
+		return errors.New("minPrice must be less than or equal to maxPrice")
+	}
+	if s.Sort == "" {
+		s.Sort = SortTypeDefault
+	}
+	if s.Sort != SortTypeDefault && s.Sort != SortTypePriceAsc && s.Sort != SortTypePriceDesc {
+		return errors.New("sort is invalid")
+	}
+	return nil
+}
+
+func amazonItemSearch(s *SearchRequest) (interface{}, error) {
 	client := paapi5.New(
 		paapi5.WithMarketplace(paapi5.LocaleJapan),
 	).CreateClient(
@@ -25,11 +63,29 @@ func amazonItemSearch(keyword string) (interface{}, error) {
 		conf.Amazon.SecretKey,
 	)
 
+	filterMap := make(query.RequestMap)
+	filterMap[query.CurrencyOfPreference] = "JPY"
+
+	if s.MinPrice > 0 {
+		filterMap[query.MinPrice] = s.MinPrice * 100
+	}
+	if s.MaxPrice > 0 {
+		filterMap[query.MaxPrice] = s.MaxPrice * 100
+	}
+	// Price:HighToLow", "Price:LowToHigh"
+	if s.Sort == SortTypePriceAsc {
+		filterMap[query.SortBy] = "Price:LowToHigh"
+	}
+	if s.Sort == SortTypePriceDesc {
+		filterMap[query.SortBy] = "Price:HighToLow"
+	}
+
 	q := query.NewSearchItems(
 		client.Marketplace(),
 		client.PartnerTag(),
 		client.PartnerType(),
-	).Search(query.Keywords, keyword).EnableImages().EnableItemInfo().EnableOffers()
+	).Search(query.Keywords, s.Keyword).EnableImages().EnableItemInfo().EnableOffers().RequestFilters(filterMap)
+
 	body, err := client.RequestContext(context.Background(), q)
 	if err != nil {
 		return nil, err
@@ -44,12 +100,16 @@ func amazonItemSearch(keyword string) (interface{}, error) {
 }
 
 func amazonSearch(c echo.Context) error {
-	keyword := c.FormValue("keyword")
-	if keyword == "" {
-		return c.JSON(http.StatusBadRequest, "keyword is required")
+	searchRequest := new(SearchRequest)
+	if err := c.Bind(searchRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	result, err := amazonItemSearch(keyword)
+	if err := searchRequest.validate(); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	result, err := amazonItemSearch(searchRequest)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -57,15 +117,24 @@ func amazonSearch(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
+func rakutenItemSearch(s *SearchRequest) (*rakuten.IchibaItemResponse, error) {
 	ctx := context.Background()
 	tp := rakuten.Transport{}
 
 	client := rakuten.NewClient(tp.Client(), conf.Rakuten.ApplicationID, conf.Rakuten.AffiliateID)
 
 	sOptions := &rakuten.IchibaItemSearchParams{
-		Keyword: keyword,
-		Hits:    10,
+		Keyword:  s.Keyword,
+		MinPrice: s.MinPrice,
+		MaxPrice: s.MaxPrice,
+		Hits:     10,
+	}
+
+	if s.Sort == SortTypePriceAsc {
+		sOptions.Sort = "+itemPrice"
+	}
+	if s.Sort == SortTypePriceDesc {
+		sOptions.Sort = "-itemPrice"
 	}
 
 	ichiba, _, err := client.Ichiba.Search(ctx, sOptions)
@@ -77,12 +146,16 @@ func rakutenItemSearch(keyword string) (*rakuten.IchibaItemResponse, error) {
 }
 
 func rakutenSearch(c echo.Context) error {
-	keyword := c.FormValue("keyword")
-	if keyword == "" {
-		return c.JSON(http.StatusBadRequest, "keyword is required")
+	searchRequest := new(SearchRequest)
+	if err := c.Bind(searchRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	result, err := rakutenItemSearch(keyword)
+	if err := searchRequest.validate(); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	result, err := rakutenItemSearch(searchRequest)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
