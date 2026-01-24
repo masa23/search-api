@@ -30,6 +30,8 @@ type SearchRequest struct {
 	MinPrice int      `json:"minPrice"`
 	MaxPrice int      `json:"maxPrice"`
 	Sort     SortType `json:"sort"`
+	Page     int      `json:"page"`
+	Size     int      `json:"size"`
 }
 
 func (s *SearchRequest) validate() error {
@@ -84,7 +86,19 @@ func amazonItemSearch(s *SearchRequest) (interface{}, error) {
 		client.Marketplace(),
 		client.PartnerTag(),
 		client.PartnerType(),
-	).Search(query.Keywords, s.Keyword).EnableImages().EnableItemInfo().EnableOffers().RequestFilters(filterMap)
+	).Search(query.Keywords, s.Keyword).EnableImages().EnableItemInfo().EnableOffers()
+
+	// ページングパラメータの設定
+	if s.Page > 0 {
+		filterMap[query.ItemPage] = s.Page
+	}
+	if s.Size > 0 {
+		// Amazon PA-APIではページサイズは固定値なので、リクエストアイテム数を制限する
+		// s.Sizeはフロントエンドでの表示制御に使用
+		// q.SetItemCount(s.Size)  // コメントアウトして無効化
+	}
+
+	q.RequestFilters(filterMap)
 
 	body, err := client.RequestContext(context.Background(), q)
 	if err != nil {
@@ -127,7 +141,8 @@ func rakutenItemSearch(s *SearchRequest) (*rakuten.IchibaItemResponse, error) {
 		Keyword:  s.Keyword,
 		MinPrice: s.MinPrice,
 		MaxPrice: s.MaxPrice,
-		Hits:     10,
+		Page:     s.Page,
+		Hits:     s.Size,
 	}
 
 	if s.Sort == SortTypePriceAsc {
