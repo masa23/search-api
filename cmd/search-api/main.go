@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	paapi5 "github.com/goark/pa-api"
 	"github.com/goark/pa-api/entity"
@@ -182,7 +183,15 @@ func main() {
 	var confPath string
 	var listenPort string
 	var err error
-	flag.StringVar(&confPath, "conf", "config.yaml", "path to config file")
+
+	// 環境変数から設定ファイルパスを取得、なければデフォルト値を使用
+	envConfPath := os.Getenv("CONFIG_PATH")
+	if envConfPath != "" {
+		confPath = envConfPath
+	} else {
+		flag.StringVar(&confPath, "conf", "config.yaml", "path to config file")
+	}
+
 	flag.StringVar(&listenPort, "port", ":8080", "port to listen")
 	flag.Parse()
 
